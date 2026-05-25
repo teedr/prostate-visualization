@@ -611,7 +611,7 @@ function TermTip({
 
 function GlossaryPanel() {
   return (
-    <details className="glossary-panel">
+    <details className="glossary-panel" open>
       <summary>Glossary: report terms</summary>
       <div className="glossary-grid">
         {glossaryTerms.map((term) => (
