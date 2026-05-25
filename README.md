@@ -2,6 +2,8 @@
 
 Client-side React app for turning prostate needle biopsy pathology report text into a prostate-zone visualization.
 
+Live prototype: https://prostate-visualization.vercel.app
+
 ## Current Scope
 
 - Upload or paste `.txt` report text.
@@ -12,6 +14,10 @@ Client-side React app for turning prostate needle biopsy pathology report text i
 - Provide plain-language explanations through summary text, term tooltips, and a glossary for patient-facing report review.
 
 The parser and 3D positions are intentionally heuristic. Scanned PDFs need OCR before this app can read them, and the 3D view is schematic unless patient-specific MRI coordinates are added later.
+
+## Feedback
+
+Use the `Send feedback` link in the app to open a GitHub issue. Do not include names, dates of birth, MRNs, or full real pathology reports in feedback.
 
 ## Run
 
