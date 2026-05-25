@@ -220,8 +220,8 @@ const feedbackUrl = `https://github.com/teedr/prostate-visualization/issues/new?
 )}`
 
 function App() {
-  const [reportText, setReportText] = useState('')
-  const [fileName, setFileName] = useState('')
+  const [reportText, setReportText] = useState(sampleReport)
+  const [fileName, setFileName] = useState('sample-prostate-biopsy-report.txt')
   const [isReadingFile, setIsReadingFile] = useState(false)
   const [fileError, setFileError] = useState('')
   const [activeView, setActiveView] = useState<ActiveView>('map')
