@@ -497,17 +497,14 @@ function parsePresence(text: string, term: RegExp) {
 }
 
 function parseStatus(text: string, gradeGroup?: number): BiopsyStatus {
-  const lower = text.toLowerCase()
+  const cancerMentions = classifyCancerMentions(text)
 
-  if (
-    gradeGroup ||
-    /\b(prostatic\s+)?(?:acinar\s+)?adenocarcinoma\b/.test(lower) ||
-    /\bcarcinoma\b/.test(lower)
-  ) {
+  if (gradeGroup || cancerMentions.affirmed) {
     return 'malignant'
   }
 
   if (
+    cancerMentions.uncertain ||
     /\b(asap|atypical\s+small\s+acinar\s+proliferation|atypical|suspicious|h(?:igh)?\s*grade\s*pin|h?gpin|prostatic intraepithelial neoplasia)\b/i.test(
       text,
     )
@@ -515,11 +512,56 @@ function parseStatus(text: string, gradeGroup?: number): BiopsyStatus {
     return 'suspicious'
   }
 
-  if (/\bbenign\b/i.test(text) || /\bno\s+(?:malignancy|carcinoma)\b/i.test(text)) {
+  if (
+    /\bbenign\b/i.test(text) ||
+    /\bno\s+malignancy\b/i.test(text) ||
+    cancerMentions.negated
+  ) {
     return 'benign'
   }
 
   return 'unknown'
+}
+
+function classifyCancerMentions(text: string) {
+  const cancerTerm =
+    /\b(?:(?:prostatic|acinar|invasive|intraductal)\s+)*(?:adenocarcinoma|carcinoma)\b/gi
+  let affirmed = false
+  let negated = false
+  let uncertain = false
+
+  for (const match of text.matchAll(cancerTerm)) {
+    const index = match.index
+    const before = text.slice(Math.max(0, index - 80), index).toLowerCase()
+    const after = text
+      .slice(index + match[0].length, index + match[0].length + 40)
+      .toLowerCase()
+    const isNegated =
+      /\b(?:no(?:\s+evidence\s+(?:of|for))?|negative\s+for|without)\s*$/.test(
+        before,
+      ) ||
+      /^\s*(?:(?:(?:is|was|are|were)\s+|[:=-]\s*))*?(?:not\s+(?:identified|present|seen|detected)|absent|negative)\b/.test(
+        after,
+      )
+    const isUncertain =
+      /\b(?:suspicious|concerning)\s+for\b[^.;:\n]{0,50}$/.test(before) ||
+      /\b(?:not\s+diagnostic\s+of|cannot\s+(?:exclude|rule\s+out))\b[^.;:\n]{0,35}$/.test(
+        before,
+      ) ||
+      /^\s*(?:(?:is|was)\s+)?(?:not\s+diagnostic|cannot\s+be\s+(?:excluded|ruled\s+out))\b/.test(
+        after,
+      )
+
+    if (isNegated) {
+      negated = true
+    } else if (isUncertain) {
+      uncertain = true
+    } else {
+      affirmed = true
+    }
+  }
+
+  return { affirmed, negated, uncertain }
 }
 
 function summarizeDiagnosis(text: string) {
@@ -535,7 +577,7 @@ function summarizeDiagnosis(text: string) {
 function cleanLabel(label: string) {
   return label
     .replace(/\b(prostate|needle|core|biops(?:y|ies)|specimen|container|jar)\b/gi, '')
-    .replace(/[,:;]+$/g, '')
+    .replace(/^[\s,:;.-]+|[\s,:;.-]+$/g, '')
     .replace(/\s+/g, ' ')
     .trim()
 }

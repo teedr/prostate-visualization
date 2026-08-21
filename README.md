@@ -1,19 +1,40 @@
-# Prostate Biopsy Visualization
+# Prostate Biopsy Companion · Version 2
 
-Client-side React app for turning prostate needle biopsy pathology report text into a prostate-zone visualization.
+Local-first React prototype for turning prostate needle-biopsy pathology text
+into a plain-language, visual walkthrough.
 
-Live prototype: https://prostate-visualization.vercel.app
+Previously deployed prototype (may lag this Version 2 working tree):
+https://prostate-visualization.vercel.app
 
-## Current Scope
+## Version 2
 
-- Upload or paste `.txt` report text.
-- Upload text-based PDFs, parsed in the browser with PDF.js.
-- Parse common systematic biopsy site labels: right/left, base/mid/apex, medial/lateral.
-- Parse common findings: benign, atypical/PIN, adenocarcinoma, Gleason score, Grade Group, cores positive/total, percent involvement, pattern 4/5 percentage, perineural invasion, cribriform morphology, and intraductal carcinoma.
-- Display a color-coded 2D map, schematic 3D prostate view, sortable-style table view, raw parsed JSON, and per-site detail panel.
-- Provide plain-language explanations through summary text, term tooltips, and a glossary for patient-facing report review.
+- Opens with a basic anatomy orientation, followed by a four-panel pathway from
+  PSA blood testing to tissue biopsy, separated specimens, and slide review.
+- Parses `.txt` and text-based PDF reports entirely in the browser.
+- Summarizes only four report-level facts before the specimen explorer: highest
+  grade, cancer-bearing specimen groups, documented positive cores, and greatest
+  reported core involvement.
+- Shows specimen findings in a manually rotatable 3D view by default, with a 2D
+  map, simple list, and the original pathology label kept primary.
+- Reports coverage for pattern 4, cribriform morphology, and intraductal
+  carcinoma so an unstated field is never presented as a report-wide negative.
+- Keeps exact report wording available while collapsing secondary detail and
+  clinician questions until requested.
+- Scans pasted report text for common identifiers and offers a local scrubber.
 
-The parser and 3D positions are intentionally heuristic. Scanned PDFs need OCR before this app can read them, and the 3D view is schematic unless patient-specific MRI coordinates are added later.
+The parser and 3D positions are intentionally heuristic. Scanned PDFs need OCR,
+and the anatomy is educational rather than patient-specific. This prototype
+does not diagnose, stage cancer, or recommend treatment.
+
+Medical copy and links use patient-facing material from the
+[National Cancer Institute](https://www.cancer.gov/types/prostate/patient/prostate-treatment-pdq)
+and reporting guidance from the
+[College of American Pathologists](https://documents.cap.org/protocols/Prostate.Needle.Specimen.Bx_1.0.0.1.REL_CAPCP_R.pdf).
+
+The editorial anatomy image and medical comic in `src/assets` were generated
+for this prototype. The current comic, `biopsy-process-comic-v6.jpg`, uses a
+warm, clinically respectful, text-free four-panel sequence from PSA blood
+testing and core extraction to sample handling and slide review.
 
 ## Feedback
 
@@ -30,5 +51,6 @@ npm run dev
 
 ```bash
 npm run lint
+npm test
 npm run build
 ```

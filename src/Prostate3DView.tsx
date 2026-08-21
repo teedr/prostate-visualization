@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { BiopsyRegion, BiopsySite, BiopsyStatus } from './reportParser'
+import { isSchematicSite } from './reportSummary'
 
 type Prostate3DViewProps = {
   sites: BiopsySite[]
@@ -62,7 +63,7 @@ export function Prostate3DView({
     const renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.shadowMap.type = THREE.PCFShadowMap
     renderer.domElement.className = 'prostate-canvas'
     renderer.domElement.setAttribute(
       'aria-label',
@@ -72,8 +73,8 @@ export function Prostate3DView({
 
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
-    controls.autoRotate = true
-    controls.autoRotateSpeed = 0.45
+    controls.enableRotate = true
+    controls.autoRotate = false
     controls.enablePan = false
     controls.minDistance = 2.8
     controls.maxDistance = 6.4
@@ -319,7 +320,9 @@ export function Prostate3DView({
 }
 
 function buildMarkers(sites: BiopsySite[]) {
-  return sites.map((site, index) => markerForSite(site, index))
+  return sites
+    .filter(isSchematicSite)
+    .map((site, index) => markerForSite(site, index))
 }
 
 function markerForSite(site: BiopsySite, index: number): MarkerModel {
