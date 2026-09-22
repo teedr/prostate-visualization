@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import type { BiopsyRegion, BiopsySite, BiopsyStatus } from './reportParser'
+import type { BiopsyRegion, BiopsySite } from './reportParser'
 import { isSchematicSite } from './reportSummary'
+import { specimenMarkerColor } from './reportAttention'
 
 type Prostate3DViewProps = {
   sites: BiopsySite[]
@@ -23,21 +24,6 @@ const regionY: Record<BiopsyRegion, number> = {
   apex: -0.72,
 }
 
-const statusColors: Record<BiopsyStatus, number> = {
-  benign: 0xb7c7c2,
-  suspicious: 0xf0c85a,
-  malignant: 0xcc4157,
-  unknown: 0x9aa7b1,
-}
-
-const gradeColors: Record<number, number> = {
-  1: 0xf5d46c,
-  2: 0xf7a35d,
-  3: 0xee6d52,
-  4: 0xcc4157,
-  5: 0x5e3f86,
-}
-
 export function Prostate3DView({
   sites,
   selectedSiteId,
@@ -54,8 +40,11 @@ export function Prostate3DView({
     const containerElement = container
 
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0xf7faf8)
-    scene.fog = new THREE.Fog(0xf7faf8, 5.5, 9)
+    const sceneBackground = new THREE.Color(
+      getComputedStyle(containerElement).getPropertyValue('--surface-soft').trim() || '#f8f7f2',
+    )
+    scene.background = sceneBackground
+    scene.fog = new THREE.Fog(sceneBackground, 5.5, 9)
 
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100)
     camera.position.set(0, 0.22, 4.6)
@@ -80,13 +69,13 @@ export function Prostate3DView({
     controls.maxDistance = 6.4
     controls.target.set(0, 0, 0)
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xb8c2be, 2.2))
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xbfc1b7, 2.2))
     const keyLight = new THREE.DirectionalLight(0xffffff, 3.2)
     keyLight.position.set(2.8, 3.5, 4)
     keyLight.castShadow = true
     scene.add(keyLight)
 
-    const rimLight = new THREE.DirectionalLight(0xdef6f0, 1.7)
+    const rimLight = new THREE.DirectionalLight(0xf8f7f2, 1.7)
     rimLight.position.set(-4, 1.6, -3)
     scene.add(rimLight)
 
@@ -115,7 +104,7 @@ export function Prostate3DView({
     const shell = new THREE.Mesh(
       new THREE.SphereGeometry(1.012, 48, 28),
       new THREE.MeshBasicMaterial({
-        color: 0xb9c7c2,
+        color: 0xc3c5b9,
         transparent: true,
         opacity: 0.18,
         wireframe: true,
@@ -127,7 +116,7 @@ export function Prostate3DView({
     const urethra = new THREE.Mesh(
       new THREE.CylinderGeometry(0.025, 0.038, 2.05, 18),
       new THREE.MeshStandardMaterial({
-        color: 0x0e6b5f,
+        color: 0x7d8275,
         transparent: true,
         opacity: 0.58,
       }),
@@ -138,7 +127,7 @@ export function Prostate3DView({
     const basePlane = new THREE.Mesh(
       new THREE.CircleGeometry(1.05, 72),
       new THREE.MeshBasicMaterial({
-        color: 0x0e6b5f,
+        color: 0x7d8275,
         transparent: true,
         opacity: 0.07,
         side: THREE.DoubleSide,
@@ -156,7 +145,7 @@ export function Prostate3DView({
     const clickableMarkers: THREE.Object3D[] = []
 
     for (const marker of markers) {
-      const color = markerColor(marker.site)
+      const color = specimenMarkerColor(marker.site)
       const isSelected = marker.site.id === selectedSiteId
       const markerMesh = new THREE.Mesh(
         new THREE.SphereGeometry(marker.radius, 32, 20),
@@ -178,7 +167,7 @@ export function Prostate3DView({
       const track = cylinderBetween(
         marker.entry,
         marker.position,
-        isSelected ? 0x15201e : 0x6c7a75,
+        isSelected ? 0x252923 : 0x7d8275,
         isSelected ? 0.016 : 0.009,
       )
       track.userData.siteId = marker.site.id
@@ -193,7 +182,7 @@ export function Prostate3DView({
       if (isSelected) {
         const ring = new THREE.Mesh(
           new THREE.TorusGeometry(marker.radius + 0.04, 0.012, 12, 60),
-          new THREE.MeshBasicMaterial({ color: 0x15201e }),
+          new THREE.MeshBasicMaterial({ color: 0x252923 }),
         )
         ring.position.copy(marker.position)
         ring.lookAt(camera.position)
@@ -204,7 +193,7 @@ export function Prostate3DView({
     const floor = new THREE.Mesh(
       new THREE.CircleGeometry(1.82, 80),
       new THREE.MeshBasicMaterial({
-        color: 0xdce5e1,
+        color: 0xe5e5dd,
         transparent: true,
         opacity: 0.48,
         side: THREE.DoubleSide,
@@ -344,14 +333,6 @@ function markerForSite(site: BiopsySite, index: number): MarkerModel {
   }
 }
 
-function markerColor(site: BiopsySite) {
-  if (site.status === 'malignant' && site.gradeGroup) {
-    return gradeColors[site.gradeGroup] ?? statusColors.malignant
-  }
-
-  return statusColors[site.status]
-}
-
 function markerLabel(site: BiopsySite) {
   if (site.status === 'malignant') {
     return site.gradeGroup ? `GG${site.gradeGroup}` : 'CA'
@@ -406,11 +387,16 @@ function makeTextSprite(text: string, color: number, selected: boolean) {
   }
 
   context.clearRect(0, 0, canvas.width, canvas.height)
-  context.fillStyle = selected ? '#15201e' : rgba(color, 0.92)
+  context.fillStyle = `#${new THREE.Color(color).getHexString()}`
   roundRect(context, 30, 14, 120, 48, 12)
   context.fill()
-  context.fillStyle = selected || needsLightText(color) ? '#ffffff' : '#15201e'
-  context.font = '700 30px Inter, Arial, sans-serif'
+  if (selected) {
+    context.strokeStyle = '#252923'
+    context.lineWidth = 4
+    context.stroke()
+  }
+  context.fillStyle = needsLightText(color) ? '#ffffff' : '#252923'
+  context.font = '700 30px system-ui, sans-serif'
   context.textAlign = 'center'
   context.textBaseline = 'middle'
   context.fillText(text, 90, 39)
@@ -426,13 +412,6 @@ function makeTextSprite(text: string, color: number, selected: boolean) {
   )
   sprite.scale.set(0.46, 0.22, 1)
   return sprite
-}
-
-function rgba(color: number, alpha: number) {
-  const parsed = new THREE.Color(color)
-  return `rgba(${Math.round(parsed.r * 255)}, ${Math.round(
-    parsed.g * 255,
-  )}, ${Math.round(parsed.b * 255)}, ${alpha})`
 }
 
 function needsLightText(color: number) {

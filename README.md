@@ -3,15 +3,16 @@
 Local-first React prototype for turning prostate needle-biopsy pathology text
 into a plain-language, visual walkthrough.
 
-Previously deployed prototype (may lag this Version 2 working tree):
-https://prostate-visualization.vercel.app
+Version 2 website: https://prostate-visualization-v2.vercel.app
+
+Original prototype: https://prostate-visualization.vercel.app
 
 ## Version 2
 
 - Opens with a basic anatomy orientation, followed by a four-panel pathway from
   PSA blood testing to tissue biopsy, separated specimens, and slide review.
 - Parses `.txt` and text-based PDF reports entirely in the browser.
-- Summarizes only four report-level facts before the specimen explorer: highest
+- Summarizes four report-level facts below the specimen explorer: highest
   grade, cancer-bearing specimen groups, documented positive cores, and greatest
   reported core involvement.
 - Shows specimen findings in a manually rotatable 3D view by default, with a 2D
@@ -20,6 +21,8 @@ https://prostate-visualization.vercel.app
   carcinoma so an unstated field is never presented as a report-wide negative.
 - Keeps exact report wording available while collapsing secondary detail and
   clinician questions until requested.
+- Uses Canary Foundation styling with a logo-only header, red cancer markers,
+  a flagged-specimen filter, and accessible “i” explanations for report terms.
 - Scans pasted report text for common identifiers and offers a local scrubber.
 
 The parser and 3D positions are intentionally heuristic. Scanned PDFs need OCR,
@@ -54,3 +57,11 @@ npm run lint
 npm test
 npm run build
 ```
+
+## Publishing
+
+The `version2` branch is the source for the v2 website. Deploy its verified
+static build to the separate Vercel project `prostate-visualization-v2`
+(`prj_OjUIFiMokIoyVe5QKyTYp4tFa5s0`). Check the project link before deploying:
+an existing local `.vercel/project.json` may still point to the original v1
+project. Do not publish a v2 update to the v1 project.

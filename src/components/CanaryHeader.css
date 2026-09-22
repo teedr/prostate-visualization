@@ -1,0 +1,51 @@
+.canary-header {
+  background: rgba(255, 253, 247, 0.96);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.canary-header-inner {
+  align-items: center;
+  display: flex;
+  margin: 0 auto;
+  max-width: 1280px;
+  min-height: 76px;
+  padding: 16px 24px;
+}
+
+.canary-header a { color: #242722; text-decoration: none; }
+.canary-header a:focus-visible { outline-color: #b38600; }
+
+.canary-brand {
+  align-items: center;
+  border-radius: 14px;
+  display: flex;
+  gap: 12px;
+  min-height: 44px;
+}
+.canary-brand-mark {
+  align-items: center;
+  background: #ffc4001a;
+  border: 1px solid #0000000f;
+  border-radius: 14px;
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+.canary-brand img { display: block; height: 36px; object-fit: contain; width: 36px; }
+.canary-brand strong { display: block; font-size: 18px; font-weight: 700; letter-spacing: -0.025em; line-height: 28px; }
+.canary-brand small { color: #65685e; display: block; font-size: 10px; font-weight: 500; letter-spacing: 0.15em; line-height: 15px; text-transform: uppercase; }
+
+.canary-header .canary-skip-link { background: var(--ink); border-radius: 14px; color: white; left: 16px; padding: 12px 20px; position: absolute; top: -100px; z-index: 1; }
+.canary-skip-link:focus { top: 12px; }
+
+@media (max-width: 639px) {
+  .canary-header-inner { min-height: 68px; padding: 12px 16px; }
+  .canary-brand { gap: 10px; }
+  .canary-brand strong { font-size: 16px; }
+  .canary-brand small { display: none; }
+}

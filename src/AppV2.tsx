@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react'
 import {
   ExternalLink,
   FileSearch,
-  FlaskConical,
   Microscope,
   ShieldCheck,
 } from 'lucide-react'
@@ -13,7 +12,10 @@ import {
   ReportExplorer,
   type ReportView,
 } from './components/ReportExplorer'
+import { TermLabel } from './components/InfoTip'
+import type { ExplanationKey } from './reportExplanations'
 import { ReportLab } from './components/ReportLab'
+import { CanaryHeader } from './components/CanaryHeader'
 import type { BiopsySite, ParseResult } from './reportParser'
 import { parseReport } from './reportParser'
 import {
@@ -114,31 +116,11 @@ function AppV2() {
 
   return (
     <div className="simple-app">
-      <header
-        className="simple-topbar"
-        inert={reportLabOpen ? true : undefined}
-        aria-hidden={reportLabOpen || undefined}
-      >
-        <a className="simple-brand" href="#process" aria-label="Back to process overview">
-          <span aria-hidden="true">
-            <FlaskConical />
-          </span>
-          <span>
-            Prostate biopsy companion
-            <small>Educational report explorer</small>
-          </span>
-        </a>
-        <button
-          type="button"
-          className="use-report-button"
-          onClick={() => setReportLabOpen(true)}
-        >
-          <FileSearch aria-hidden="true" size={17} />
-          Use a report
-        </button>
-      </header>
+      <CanaryHeader inactive={reportLabOpen} />
 
       <main
+        id="main-content"
+        tabIndex={-1}
         inert={reportLabOpen ? true : undefined}
         aria-hidden={reportLabOpen || undefined}
       >
@@ -150,9 +132,15 @@ function AppV2() {
               <span className="section-label">Report walkthrough</span>
               <h2 id="results-title">Your biopsy results</h2>
             </div>
-            <span className="report-kind">
-              {isDemo ? 'Fictional demo' : 'Current report text'}
-            </span>
+            <div className="results-heading-actions">
+              <span className="report-kind">
+                {isDemo ? 'Fictional demo' : 'Current report text'}
+              </span>
+              <button type="button" className="use-report-button" onClick={() => setReportLabOpen(true)}>
+                <FileSearch aria-hidden="true" size={17} />
+                Use a report
+              </button>
+            </div>
           </div>
 
           <div className="compact-safety" role="note">
@@ -164,18 +152,14 @@ function AppV2() {
             </p>
           </div>
 
-          <ResultsSummary parsed={parsed} summary={summary} />
-
-          <ReportExplorer
-            sites={parsed.sites}
+          <SpecimenResults
+            parsed={parsed}
+            summary={summary}
             selectedSiteId={activeSelectedSiteId}
             onSelectSite={setSelectedSiteId}
-            activeView={reportView}
-            onChangeView={setReportView}
+            reportView={reportView}
+            onChangeReportView={setReportView}
           />
-
-          <ImportantDetails parsed={parsed} summary={summary} />
-          <DecisionLimits />
         </section>
       </main>
 
@@ -287,6 +271,54 @@ function ProcessComic() {
   )
 }
 
+function SpecimenResults({
+  parsed,
+  summary,
+  selectedSiteId,
+  onSelectSite,
+  reportView,
+  onChangeReportView,
+}: {
+  parsed: ParseResult
+  summary: ReportSummary
+  selectedSiteId?: string
+  onSelectSite: (siteId: string) => void
+  reportView: ReportView
+  onChangeReportView: (view: ReportView) => void
+}) {
+  return (
+    <div className="results-layout results-layout-specimen">
+      <div className="layout-panel-heading specimen-layout-heading">
+        <span className="layout-panel-label">Specimen navigator</span>
+        <h3>Explore each tissue sample</h3>
+        <p>
+          Choose a specimen to see its result. Tap an <span className="inline-info">i</span> for
+          a plain-language explanation of what you’re reading.
+        </p>
+      </div>
+      <ReportExplorer
+        sites={parsed.sites}
+        selectedSiteId={selectedSiteId}
+        onSelectSite={onSelectSite}
+        activeView={reportView}
+        onChangeView={onChangeReportView}
+      />
+      <section className="specimen-report-snapshot" aria-labelledby="specimen-snapshot-title">
+        <div className="layout-panel-heading">
+          <span className="layout-panel-label">Report-level context</span>
+          <h3 id="specimen-snapshot-title">Whole-report snapshot</h3>
+        </div>
+        <ResultsSummary parsed={parsed} summary={summary} />
+      </section>
+      <ImportantDetails parsed={parsed} summary={summary} />
+      <DecisionLimits />
+      <p className="results-education-source">
+        Learn more: <a href="https://www.cancer.org/cancer/diagnosis-staging/tests/pathology-reports/prostate-pathology/prostate-cancer-pathology.html" target="_blank" rel="noreferrer">American Cancer Society’s guide to your pathology report</a>
+      </p>
+    </div>
+  )
+}
+
 function ResultsSummary({
   parsed,
   summary,
@@ -306,6 +338,7 @@ function ResultsSummary({
       <div className="metric-grid">
         <Metric
           label="Highest grade"
+          explanation="highestGrade"
           value={summary.highestGradeGroup ? `GG${summary.highestGradeGroup}` : 'Not found'}
           detail={
             summary.highestSite
@@ -315,11 +348,13 @@ function ResultsSummary({
         />
         <Metric
           label="Cancer-bearing specimen groups"
+          explanation="specimenGroups"
           value={`${summary.cancerSiteCount} of ${summary.parsedSiteCount}`}
           detail="Specimen groups with cancer wording—not a stage or tumor count."
         />
         <Metric
           label="Known positive cores"
+          explanation="positiveCores"
           value={
             summary.knownPositiveCores === undefined
               ? 'Not found'
@@ -333,6 +368,7 @@ function ResultsSummary({
         />
         <Metric
           label="Greatest reported involvement"
+          explanation="involvement"
           value={
             summary.maxInvolvement === undefined
               ? 'Not found'
@@ -353,14 +389,16 @@ function Metric({
   label,
   value,
   detail,
+  explanation,
 }: {
   label: string
   value: string
   detail: string
+  explanation: ExplanationKey
 }) {
   return (
     <article className="metric-card">
-      <span>{label}</span>
+      <span><TermLabel label={label} term={explanation} /></span>
       <strong>{value}</strong>
       <p>{detail}</p>
     </article>
@@ -402,7 +440,7 @@ function ImportantDetails({
 
       <div className="detail-grid">
         <article className="detail-card">
-          <span>Pattern 4 amount</span>
+          <span><TermLabel label="Pattern 4 amount" term="pattern4" /></span>
           <strong>
             {patternFourMaximum === undefined
               ? 'Not found in relevant text'
@@ -414,12 +452,13 @@ function ImportantDetails({
               : `${reportedPatternFour.length} of ${relevantPatternFourSites.length} GG2/GG3 specimen groups reported a value.`}
           </p>
         </article>
-        <FeatureCoverageCard title="Cribriform morphology" evidence={summary.cribriform} />
-        <FeatureCoverageCard title="Intraductal carcinoma (IDC-P)" evidence={summary.intraductal} />
+        <FeatureCoverageCard term="cribriform" title="Cribriform morphology" evidence={summary.cribriform} />
+        <FeatureCoverageCard term="intraductal" title="Intraductal carcinoma (IDC-P)" evidence={summary.intraductal} />
       </div>
 
       <details className="secondary-detail">
         <summary>Other report detail: perineural invasion</summary>
+        <p><TermLabel label="Perineural invasion" term="pni" /></p>
         <p>{featureCoverageCopy(summary.perineuralInvasion)}</p>
       </details>
     </section>
@@ -429,13 +468,15 @@ function ImportantDetails({
 function FeatureCoverageCard({
   title,
   evidence,
+  term,
 }: {
   title: string
+  term: ExplanationKey
   evidence: FeatureEvidence
 }) {
   return (
     <article className={`detail-card ${featureTone(evidence)}`}>
-      <span>{title}</span>
+      <span><TermLabel label={title} term={term} /></span>
       <strong>{featureHeadline(evidence)}</strong>
       <p>{featureCoverageCopy(evidence)}</p>
     </article>
@@ -496,6 +537,7 @@ function getMaxInvolvementSite(sites: BiopsySite[]) {
 
   return maximum
 }
+
 
 function summarySentence(summary: ReportSummary) {
   if (!summary.highestSite || !summary.highestGradeGroup) {
